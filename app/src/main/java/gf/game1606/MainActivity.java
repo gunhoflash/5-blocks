@@ -9,6 +9,7 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,6 +44,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 	private Handler        realTimeThreadHandler;
 	private ThreadRunnable realTimeThreadRunnable;
 	private Thread         realTimeThread;
+	private int            realTimeThreadSleepTime = 36;
 	// thread
 
 	@Override
@@ -53,7 +55,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
 		relativeLayout = new RelativeLayout(this);
-		relativeLayout.setBackgroundColor(ColorSet.LightGray);
+		relativeLayout.setBackgroundColor(Color.WHITE);
 		relativeLayout.setLayoutParams(new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 		setContentView(relativeLayout);
 
@@ -93,7 +95,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 					{
 						if (realTimeThreadIsRunning)
 						{
-							Thread.sleep(36);
+							Thread.sleep(realTimeThreadSleepTime);
 							realTimeThreadHandler.post(realTimeThreadRunnable);
 						}
 					}
@@ -108,13 +110,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 
 	private void initializeLayout()
 	{
-		Block background = new Block(this, blockSize*14, WIDTH*0.8f - blockSize*7f, HEIGHT*0.45f - blockSize*7f, 1);
-		background.toColor = Color.WHITE;
-		background.i = -1;
-		background.setToScaleX(1.8f);
-		background.setRotation(-26f);
-		relativeLayout.addView(background, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		blocks.add(background);
+		float rotation = -26f;
 
 		titleText = new TextView(this);
 		titleText.setText("5 Blocks");
@@ -127,7 +123,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		titleText.setY(HEIGHT*0.14f);
 		titleText.setScaleX(2f);
 		titleText.setScaleY(2f);
-		titleText.setRotation(background.getRotation());
+		titleText.setRotation(rotation);
 		relativeLayout.addView(titleText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
 		GFtext = new TextView(this);
@@ -141,7 +137,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		//relativeLayout.addView(GFtext, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
 		startBtn = new Block(this, blockSize*9, WIDTH*0.5f, HEIGHT*0.25f, 1);
-		startBtn.setRotation(background.getRotation());
+		startBtn.setRotation(rotation);
 		startBtn.setEnabled(true);
 		startBtn.setOnClickListener(this);
 		relativeLayout.addView(startBtn, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -150,7 +146,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 
 		startBtnText = new TextView(this);
 		startBtnText.setText(" PLAY");
-		startBtnText.setTextColor(background.toColor);
+		startBtnText.setTextColor(Color.WHITE);
 		startBtnText.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
 		startBtnText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 64);
 		startBtnText.setSingleLine();
@@ -161,7 +157,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		startBtnText.setY(startBtn.getToY());
 		startBtnText.setScaleX(0.9f);
 		startBtnText.setScaleY(0.9f);
-		startBtnText.setRotation(background.getRotation());
+		startBtnText.setRotation(rotation);
 		relativeLayout.addView(startBtnText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		//startBtnText.setOnClickListener(this);
 
@@ -169,7 +165,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		//tutorialBtn.setX(tutorialBtn.toX);
 		tutorialBtn.setPivotX(startBtn.getPivotX());
 		tutorialBtn.setPivotY(startBtn.getPivotY());
-		tutorialBtn.setRotation(background.getRotation());
+		tutorialBtn.setRotation(rotation);
 		tutorialBtn.setToX(tutorialBtn.getToX() - blockSize*7*Math.cos(Math.toRadians((double)startBtn.getRotation())));
 		tutorialBtn.setToY(tutorialBtn.getToY() - blockSize*7*Math.sin(Math.toRadians((double)startBtn.getRotation())));
 		tutorialBtn.setEnabled(true);
@@ -180,7 +176,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 
 		tutorialBtnText = new TextView(this);
 		tutorialBtnText.setText("HOW\nTO\nPLAY");
-		tutorialBtnText.setTextColor(background.toColor);
+		tutorialBtnText.setTextColor(Color.WHITE);
 		tutorialBtnText.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
 		tutorialBtnText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 40);
 		tutorialBtnText.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
@@ -190,7 +186,7 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 		tutorialBtnText.setY(startBtn.getToY() - blockSize*4.75f*(float)Math.sin(Math.toRadians((double)startBtn.getRotation()))); // 4.75f
 		tutorialBtnText.setScaleX(0.9f);
 		tutorialBtnText.setScaleY(0.9f);
-		tutorialBtnText.setRotation(background.getRotation());
+		tutorialBtnText.setRotation(rotation);
 		relativeLayout.addView(tutorialBtnText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		//tutorialBtnText.setOnClickListener(this);
 	}
@@ -231,10 +227,19 @@ public class MainActivity extends AppActivity implements View.OnClickListener
 	}
 	private void realTimeThread()
 	{
+		boolean needToUpdate = false;
 		for (int i = 0; i < blocks.size(); i++)
 		{
-			blocks.get(i).update();
+			if (blocks.get(i).isNeedToUpdate())
+			{
+				needToUpdate = true;
+				blocks.get(i).update();
+			}
 		}
+		if (!needToUpdate)
+			realTimeThreadSleepTime = 1000;
+		else if (realTimeThreadSleepTime == 1000)
+			realTimeThreadSleepTime = 36;
 	}
 
 	private void loadData()

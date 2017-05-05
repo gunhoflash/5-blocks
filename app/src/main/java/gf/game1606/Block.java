@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -13,43 +14,45 @@ import static gf.game1606.AppActivity.blockNum;
 
 public class Block extends View
 {
+	private static final int UN_SELECTED_INDEX = -1;
+	private Context context;
+	private boolean needToUpdate;
+
 	private int blockSize;
 	private int color = Color.WHITE;
-	public int level; // 0 ~ ColorSet.color.length-1
-	public int i, j;
-	public int toColor;
+	private int level; // 0 ~ ColorSet.color.length-1
+	private int i, j;
+
+	private int toColor;
+	private int toX, toY;
+	private float toAlpha = 1;
 	private float toScaleX = 1;
 	private float toScaleY = 1;
-	private float toAlpha = 1;
-	private int toX, toY;
 
-	public Rect rect;
-	public boolean selected = false;
-	public int selectedIndex = -1;
+	private Rect hitBox;
+	private int selectedIndex = UN_SELECTED_INDEX;
 
-	public Block(Context context, int blockSize, int toX, int toY, int level)
+	public Block(Context context, Number blockSize, Number toX, Number toY, int level)
 	{
 		super(context);
-		if (blockSize == 0) return;
+		if (blockSize.intValue() == 0) return;
 
-		this.blockSize = blockSize;
+		this.context = context;
+		this.blockSize = blockSize.intValue();
 		this.level = level;
-		this.toColor = ColorSet.color[level];
+		this.toColor = ContextCompat.getColor(context, ColorSet.color[level]);
 
-		setClipBounds(new Rect(0, 0, blockSize, blockSize));
+		setClipBounds(new Rect(0, 0, this.blockSize, this.blockSize));
 		setEnabled(false);
 		setToX(toX);
 		setToY(toY);
-		setPivotX(blockSize/2);
-		setPivotY(blockSize/2);
+		setPivotX(this.blockSize/2);
+		setPivotY(this.blockSize/2);
 		setAlpha(0);
 
-		rect = new Rect(toX, toY, toX+blockSize, toY+blockSize);
+		this.hitBox = new Rect(toX.intValue(), toY.intValue(), toX.intValue()+this.blockSize, toY.intValue()+this.blockSize);
 	}
-	public Block(Context context, Number blockSize, Number x, Number y, int level)
-	{
-		this(context, (int) blockSize, (int) x, (int) y, level);
-	}
+
 	public Block(Context context)
 	{
 		this(context, 0, 0, 0, 0);
@@ -65,69 +68,95 @@ public class Block extends View
 
 	public void update()
 	{
-		rect.left   = (int) getX();
-		rect.right  = (int) getX() + blockSize;
-		rect.top    = (int) getY();
-		rect.bottom = (int) getY() + blockSize;
+		if (isNeedToUpdate())
+		{
+			boolean isUpdated = false;
+			hitBox.set((int) getX(), (int) getY(), (int) getX() + blockSize, (int) getY() + blockSize);
 
-		if (i != -1)
-		{
-			toColor = ColorSet.color[level];
-			if (selectedIndex != -1)
-				setToScaleXY(1.2, 1.2);
-			else
-				setToScaleXY(1, 1);
-		}
-
-		if (getScaleX() != getToScaleX())
-		{
-			if (Math.abs(getScaleX() - getToScaleX()) < 0.01f)
-				setScaleX(getToScaleX());
-			else
-				setScaleX(getScaleX() + (getToScaleX() - getScaleX()) * 0.5f);
-		}
-		if (getScaleY() != getToScaleY())
-		{
-			if (Math.abs(getScaleY() - getToScaleY()) < 0.01f)
-				setScaleY(getToScaleY());
-			else
-				setScaleY(getScaleY() + (getToScaleY() - getScaleY()) * 0.5f);
-		}
-
-		if (getX() != getToX())
-		{
-			if (Math.abs(getToX() - getX()) < 1)
-				setX(getToX());
-			else
-				setX(getX() + (getToX()-getX())*0.35f);
-		}
-		if (getY() != getToY())
-		{
-			if (Math.abs(getToY() - getY()) < 1)
-				setY(getToY());
-			else
-				setY(getY() + (getToY()-getY())*0.35f);
-		}
-
-		if (getAlpha() != getToAlpha())
-		{
-			if (Math.abs(getToAlpha() - getAlpha()) < 0.06f)
-				setAlpha(getToAlpha());
-			else
-				setAlpha(getAlpha() + (getToAlpha()-getAlpha())*0.55f);
-		}
-
-		if (color != toColor)
-		{
-			int[] rgb   = { Color.red(color)  , Color.green(color)  , Color.blue(color)   };
-			int[] torgb = { Color.red(toColor), Color.green(toColor), Color.blue(toColor) };
-			for (int i = 0; i < 3; i++)
+			if (i != -1)
 			{
-					 if (torgb[i] < rgb[i] - 6) rgb[i] -= 6;
-				else if (torgb[i] > rgb[i] + 6) rgb[i] += 6;
-				else rgb[i] = torgb[i];
+				this.toColor = ContextCompat.getColor(context, ColorSet.color[level]);
+				if (selectedIndex != UN_SELECTED_INDEX)
+					setToScaleXY(1.2, 1.2);
+				else
+					setToScaleXY(1, 1);
 			}
-			color = Color.rgb(rgb[0], rgb[1], rgb[2]);
+
+			if (color != toColor)
+			{
+				int[] rgb = {Color.red(color), Color.green(color), Color.blue(color)};
+				int[] torgb = {Color.red(toColor), Color.green(toColor), Color.blue(toColor)};
+				for (int i = 0; i < 3; i++)
+				{
+					if (rgb[i] > torgb[i] + 6)
+					{
+						rgb[i] -= 6;
+						isUpdated = true;
+					}
+					else if (rgb[i] < torgb[i] - 6)
+					{
+						rgb[i] += 6;
+						isUpdated = true;
+					}
+					else rgb[i] = torgb[i];
+				}
+				color = Color.rgb(rgb[0], rgb[1], rgb[2]);
+			}
+
+			if (getX() != getToX())
+			{
+				if (Math.abs(getToX() - getX()) < 1)
+					setX(getToX());
+				else
+				{
+					setX(getX() + (getToX() - getX()) * 0.35f);
+					isUpdated = true;
+				}
+			}
+			if (getY() != getToY())
+			{
+				if (Math.abs(getToY() - getY()) < 1)
+					setY(getToY());
+				else
+				{
+					setY(getY() + (getToY() - getY()) * 0.35f);
+					isUpdated = true;
+				}
+			}
+
+			if (getAlpha() != getToAlpha())
+			{
+				if (Math.abs(getToAlpha() - getAlpha()) < 0.06f)
+					setAlpha(getToAlpha());
+				else
+				{
+					setAlpha(getAlpha() + (getToAlpha() - getAlpha()) * 0.55f);
+					isUpdated = true;
+				}
+			}
+
+			if (getScaleX() != getToScaleX())
+			{
+				if (Math.abs(getScaleX() - getToScaleX()) < 0.01f)
+					setScaleX(getToScaleX());
+				else
+				{
+					setScaleX(getScaleX() + (getToScaleX() - getScaleX()) * 0.5f);
+					isUpdated = true;
+				}
+			}
+			if (getScaleY() != getToScaleY())
+			{
+				if (Math.abs(getScaleY() - getToScaleY()) < 0.01f)
+					setScaleY(getToScaleY());
+				else
+				{
+					setScaleY(getScaleY() + (getToScaleY() - getScaleY()) * 0.5f);
+					isUpdated = true;
+				}
+			}
+
+			needToUpdate = isUpdated;
 		}
 	}
 
@@ -151,37 +180,44 @@ public class Block extends View
 		}
 	}
 
-	public float getToScaleX()
+	// update
+	public boolean isNeedToUpdate()
 	{
-		return this.toScaleX;
-	}
-	public float getToScaleY()
-	{
-		return this.toScaleY;
-	}
-	public void setToScaleX(Number toScaleX)
-	{
-		this.toScaleX = (float)toScaleX;
-	}
-	public void setToScaleY(Number toScaleY)
-	{
-		this.toScaleY = (float)toScaleY;
-	}
-	public void setToScaleXY(Number toScaleX, Number toScaleY)
-	{
-		setToScaleX(toScaleX);
-		setToScaleY(toScaleY);
+		return this.needToUpdate;
 	}
 
-	public float getToAlpha()
+	// select
+	public void select(int selectedIndex)
 	{
-		return this.toAlpha;
+		this.selectedIndex = selectedIndex;
+		needToUpdate = true;
 	}
-	public void setToAlpha(Number toAlpha)
+	public void unSelect()
 	{
-		this.toAlpha = (float)toAlpha;
+		this.select(UN_SELECTED_INDEX);
+	}
+	public boolean isSelected()
+	{
+		return (this.selectedIndex != UN_SELECTED_INDEX);
 	}
 
+	// getter
+	public int getToColor()
+	{
+		return this.toColor;
+	}
+	public int getLevel()
+	{
+		return this.level;
+	}
+	public int getI()
+	{
+		return this.i;
+	}
+	public int getJ()
+	{
+		return this.j;
+	}
 	public int getToX()
 	{
 		return this.toX;
@@ -190,20 +226,79 @@ public class Block extends View
 	{
 		return this.toY;
 	}
+	public float getToAlpha()
+	{
+		return this.toAlpha;
+	}
+	public float getToScaleX()
+	{
+		return this.toScaleX;
+	}
+	public float getToScaleY()
+	{
+		return this.toScaleY;
+	}
+	public int getSelectedIndex()
+	{
+		return this.selectedIndex;
+	}
+
+	// setter
+	public void setToColor(int toColor)
+	{
+		this.toColor = toColor;
+		needToUpdate = true;
+	}
+	public void setLevel(int level)
+	{
+		this.level = level;
+		needToUpdate = true;
+	}
+	public void setIJ(int i, int j)
+	{
+		this.i = i;
+		this.j = j;
+	}
 	public void setToX(Number toX)
 	{
-		this.toX = (int)toX;
+		this.toX = toX.intValue();
+		needToUpdate = true;
 	}
 	public void setToY(Number toY)
 	{
-		this.toY = (int)toY;
+		this.toY = toY.intValue();
+		needToUpdate = true;
+	}
+	public void setToAlpha(Number toAlpha)
+	{
+		this.toAlpha = toAlpha.floatValue();
+		needToUpdate = true;
+	}
+	public void setToScaleX(Number toScaleX)
+	{
+		this.toScaleX = toScaleX.floatValue();
+		needToUpdate = true;
+	}
+	public void setToScaleY(Number toScaleY)
+	{
+		this.toScaleY = toScaleY.floatValue();
+		needToUpdate = true;
+	}
+	public void setToScaleXY(Number toScaleX, Number toScaleY)
+	{
+		setToScaleX(toScaleX);
+		setToScaleY(toScaleY);
+	}
+
+	public boolean isHit(Number x, Number y)
+	{
+		return this.hitBox.contains(x.intValue(), y.intValue());
 	}
 
 	static boolean isNear(Block block1, Block block2)
 	{
 		return ((Math.abs(block1.i - block2.i) == 1 && block1.j == block2.j) || (Math.abs(block1.j - block2.j) == 1 && block1.i == block2.i));
 	}
-
 	static public int getXPosition(float i, int blockNum)
 	{
 		return (int) (i * (AppActivity.blockSize + blockGap) + (AppActivity.WIDTH  - (AppActivity.blockSize + blockGap) * blockNum) * 0.5f + blockGap / 2f);
@@ -221,6 +316,3 @@ public class Block extends View
 		return getYPosition(i, blockNum);
 	}
 }
-
-
-

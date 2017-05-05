@@ -138,7 +138,10 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 			soundPoolBuilder.setMaxStreams(25);
 			soundPoolBuilder.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
 			soundPool = soundPoolBuilder.build();
-		} else soundPool = new SoundPool(25, AudioManager.STREAM_MUSIC, 0);
+		}
+		else
+			soundPool = new SoundPool(25, AudioManager.STREAM_MUSIC, 0);
+
 		soundID = soundPool.load(this, R.raw.tick, 1);
 
 		loadData();
@@ -159,94 +162,107 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 	@Override
 	public boolean onTouch(View v, MotionEvent event)
 	{
-		if (removeBlocks.size() > 0) return false;
+		// Do not get event while blocks are removing
+		if (removeBlocks.size() > 0)
+			return false;
 
 		int i, j, k;
+
+		// Do not get event while blocks are removing
 		for (i = 0; i < blocks.length; i++)
 			for (j = 0; j < blocks[i].length; j++)
-				if (blocks[i][j] == null) return false;
+				if (blocks[i][j] == null)
+					return false;
 
+		// Get event
 		switch (MotionEventCompat.getActionMasked(event))
 		{
 			case MotionEvent.ACTION_DOWN:
-				System.out.println("ACTION_DOWN");
-			case MotionEvent.ACTION_MOVE:
-				if (selectedBlocks.size() != 0 || MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN)
+				// Exception
+				if (selectedBlocks.size() != 0)
+					return false;
+
+				for (i = 0; i < blocks.length; i++)
 				{
-					for (i = 0; i < blocks.length; i++)
+					for (j = 0; j < blocks[i].length; j++)
 					{
-						for (j = 0; j < blocks[i].length; j++)
+						if (blocks[i][j].isHit(event.getX(), event.getY()))
 						{
-							if (blocks[i][j].rect.contains((int) event.getX(), (int) event.getY()))
+							blocks[i][j].select(0);
+							selectedBlocks.add(blocks[i][j]);
+							return true;
+						}
+					}
+				}
+				return true;
+
+			case MotionEvent.ACTION_MOVE:
+				// Exception
+				if (selectedBlocks.size() == 0) return false;
+
+				for (i = 0; i < blocks.length; i++)
+				{
+					for (j = 0; j < blocks[i].length; j++)
+					{
+						if (blocks[i][j].isHit(event.getX(), event.getY()))
+						{
+							if (selectedBlocks.get(0).getLevel() == blocks[i][j].getLevel())
 							{
-								if (selectedBlocks.size() != 0)
+								if (blocks[i][j].isSelected())
 								{
-									if (selectedBlocks.get(selectedBlocks.size() - 1).level == blocks[i][j].level)
+									while (blocks[i][j].getSelectedIndex() < selectedBlocks.size() - 1)
 									{
-										if (!blocks[i][j].selected)
-										{
-											if (Block.isNear(selectedBlocks.get(selectedBlocks.size() - 1), blocks[i][j]))
-											{
-												blocks[i][j].selected = true;
-												selectedBlocks.add(blocks[i][j]);
-											}
-											break;
-										}
-										else
-										{
-											while (selectedBlocks.size() > 1)
-											{
-												if (!selectedBlocks.get(selectedBlocks.size() - 1).equals(blocks[i][j]))
-												{
-													selectedBlocks.get(selectedBlocks.size() - 1).selected = false;
-													selectedBlocks.remove(selectedBlocks.size() - 1);
-												} else break;
-											}
-										}
+										selectedBlocks.get(selectedBlocks.size() - 1).unSelect();
+										selectedBlocks.remove(selectedBlocks.size() - 1);
 									}
 								}
-								else
+								else if (Block.isNear(selectedBlocks.get(selectedBlocks.size() - 1), blocks[i][j]))
 								{
-									blocks[i][j].selected = true;
+									blocks[i][j].select(selectedBlocks.size());
 									selectedBlocks.add(blocks[i][j]);
+									//System.out.println(selectedBlocks.size());
 								}
-								break;
 							}
+							return true;
 						}
 					}
 				}
 				return true;
 
 			case MotionEvent.ACTION_UP:
-				System.out.println("ACTION_UP");
 				if (playing)
 				{
 					if (selectedBlocks.size() > 1)
 					{
-						k = selectedBlocks.get(0).level;
+						k = selectedBlocks.get(0).getLevel();
 						if (k != colorNumber)
 						{
-							int plus = (int) (Math.pow(selectedBlocks.size(), 1.9 + 2.0/(k + 4)) * 100 / (k  + 4));
-							toScore += plus;
-							totalScore += plus;
-							if (toScore > highScore) highScore = toScore;
+							int plusScore = (int) (Math.pow(selectedBlocks.size(), 1.9 + 2.0/(k + 4)) * 100 / (k  + 4));
+							toScore += plusScore;
+							totalScore += plusScore;
+							if (toScore > highScore)
+								highScore = toScore;
 
 							for (i = 0; i < blocks.length; i++)
 							{
 								for (j = 0; j < blocks[i].length; j++)
 								{
-									if (blocks[i][j].level == k && !blocks[i][j].selected)
+									if (blocks[i][j].getLevel() == k && !blocks[i][j].isSelected())
 									{
-										if (blocks[i][j].level == colorNumber - 1) OOPS = true;
-										blocks[i][j].level++;
+										if (blocks[i][j].getLevel() == colorNumber - 1)
+											OOPS = true;
+										blocks[i][j].setLevel(blocks[i][j].getLevel() + 1);
 									}
 								}
 							}
+
 							while (selectedBlocks.size() > 0)
 							{
 								removeBlocks.add(selectedBlocks.remove(0));
 							}
-							if (removeBlocks.size() > 0) saveData();
+
+							if (removeBlocks.size() > 0)
+								saveData();
 						}
 					}
 				}
@@ -255,20 +271,21 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 				{
 					for (j = 0; j < blocks[i].length; j++)
 					{
-						blocks[i][j].selected = false;
+						blocks[i][j].unSelect();
 					}
 				}
 				return true;
 
 			case MotionEvent.ACTION_CANCEL:
-				System.out.println("ACTION_CANCEL");
+				System.out.println("MotionEvent.ACTION_CANCEL");
 				return true;
 
 			case MotionEvent.ACTION_OUTSIDE:
-				System.out.println("ACTION_OUTSIDE");
+				System.out.println("MotionEvent.ACTION_OUTSIDE");
 				return true;
 
 			default:
+				System.out.println("MotionEvent.default");
 				return false;
 		}
 	}
@@ -335,8 +352,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 					blocks[i][j] = newBlock(j, tempInt-1);
 					blocks[i][j].setPivotY(blockSize/2);
 					blocks[i][j].setToScaleXY(1, 1);
-					blocks[i][j].i = i;
-					blocks[i][j].j = j;
+					blocks[i][j].setIJ(i, j);
 					blocks[i][j].setToX(getXPosition(j));
 					blocks[i][j].setToY(getYPosition(i));
 				}
@@ -354,7 +370,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 				stringBuilder.append("0_");
 			else
 			{
-				stringBuilder.append(String.valueOf(nextBlocks[j].level + 1));
+				stringBuilder.append(String.valueOf(nextBlocks[j].getLevel() + 1));
 				stringBuilder.append("_");
 			}
 		}
@@ -368,7 +384,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 					stringBuilder.append("0_");
 				else
 				{
-					stringBuilder.append(String.valueOf(blocks[i][j].level + 1));
+					stringBuilder.append(String.valueOf(blocks[i][j].getLevel() + 1));
 					stringBuilder.append("_");
 				}
 			}
@@ -424,8 +440,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 					}
 					blocks[i][j].setPivotY(blockSize/2);
 					blocks[i][j].setToScaleXY(1, 1);
-					blocks[i][j].i = i;
-					blocks[i][j].j = j;
+					blocks[i][j].setIJ(i, j);
 					blocks[i][j].setToX(getXPosition(j));
 					blocks[i][j].setToY(getYPosition(i));
 					k = 1;
@@ -449,7 +464,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 			}
 			if (removeBlocks.get(0).getAlpha() < 0.1f)
 			{
-				removeBlock(removeBlocks.get(0).i, removeBlocks.get(0).j);
+				removeBlock(removeBlocks.get(0).getI(), removeBlocks.get(0).getJ());
 				removeBlocks.remove(0);
 			}
 		}
@@ -480,8 +495,7 @@ public class GameActivity extends AppActivity implements View.OnTouchListener
 	{
 		Block block = new Block(this, (int) blockSize, getXPosition(j), getYPosition(-1), level);
 		block.setX(block.getToX());
-		block.i =-1;
-		block.j = j;
+		block.setIJ(-1, j);
 		block.setPivotY(blockSize);
 		block.setToScaleY(0.2f);
 
