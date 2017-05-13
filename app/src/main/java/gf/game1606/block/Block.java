@@ -1,4 +1,4 @@
-package gf.game1606;
+package gf.game1606.block;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -9,8 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
-import static gf.game1606.AppActivity.blockGap;
-import static gf.game1606.AppActivity.blockNum;
+import gf.game1606.Application;
 
 public class Block extends View
 {
@@ -20,7 +19,7 @@ public class Block extends View
 
 	private int blockSize;
 	private int color = Color.WHITE;
-	private int level; // 0 ~ ColorSet.color.length-1
+	private int level; // 0 ~ BlockManager.color.length-1
 	private int i, j;
 
 	private int toColor;
@@ -40,17 +39,17 @@ public class Block extends View
 		this.context = context;
 		this.blockSize = blockSize.intValue();
 		this.level = level;
-		this.toColor = ContextCompat.getColor(context, ColorSet.color[level]);
+		this.toColor = ContextCompat.getColor(context, BlockManager.color[level]);
 
 		setClipBounds(new Rect(0, 0, this.blockSize, this.blockSize));
 		setEnabled(false);
 		setToX(toX);
 		setToY(toY);
-		setPivotX(this.blockSize/2);
-		setPivotY(this.blockSize/2);
+		setPivotX(this.blockSize / 2);
+		setPivotY(this.blockSize / 2);
 		setAlpha(0);
 
-		this.hitBox = new Rect(toX.intValue(), toY.intValue(), toX.intValue()+this.blockSize, toY.intValue()+this.blockSize);
+		this.hitBox = new Rect(toX.intValue(), toY.intValue(), toX.intValue() + this.blockSize, toY.intValue() + this.blockSize);
 	}
 
 	public Block(Context context)
@@ -75,7 +74,7 @@ public class Block extends View
 
 			if (i != -1)
 			{
-				this.toColor = ContextCompat.getColor(context, ColorSet.color[level]);
+				this.toColor = ContextCompat.getColor(context, BlockManager.color[level]);
 				if (selectedIndex != UN_SELECTED_INDEX)
 					setToScaleXY(1.2, 1.2);
 				else
@@ -192,10 +191,12 @@ public class Block extends View
 		this.selectedIndex = selectedIndex;
 		needToUpdate = true;
 	}
+
 	public void unSelect()
 	{
 		this.select(UN_SELECTED_INDEX);
 	}
+
 	public boolean isSelected()
 	{
 		return (this.selectedIndex != UN_SELECTED_INDEX);
@@ -206,38 +207,47 @@ public class Block extends View
 	{
 		return this.toColor;
 	}
+
 	public int getLevel()
 	{
 		return this.level;
 	}
+
 	public int getI()
 	{
 		return this.i;
 	}
+
 	public int getJ()
 	{
 		return this.j;
 	}
+
 	public int getToX()
 	{
 		return this.toX;
 	}
+
 	public int getToY()
 	{
 		return this.toY;
 	}
+
 	public float getToAlpha()
 	{
 		return this.toAlpha;
 	}
+
 	public float getToScaleX()
 	{
 		return this.toScaleX;
 	}
+
 	public float getToScaleY()
 	{
 		return this.toScaleY;
 	}
+
 	public int getSelectedIndex()
 	{
 		return this.selectedIndex;
@@ -249,41 +259,49 @@ public class Block extends View
 		this.toColor = toColor;
 		needToUpdate = true;
 	}
+
 	public void setLevel(int level)
 	{
 		this.level = level;
 		needToUpdate = true;
 	}
+
 	public void setIJ(int i, int j)
 	{
 		this.i = i;
 		this.j = j;
 	}
+
 	public void setToX(Number toX)
 	{
 		this.toX = toX.intValue();
 		needToUpdate = true;
 	}
+
 	public void setToY(Number toY)
 	{
 		this.toY = toY.intValue();
 		needToUpdate = true;
 	}
+
 	public void setToAlpha(Number toAlpha)
 	{
 		this.toAlpha = toAlpha.floatValue();
 		needToUpdate = true;
 	}
+
 	public void setToScaleX(Number toScaleX)
 	{
 		this.toScaleX = toScaleX.floatValue();
 		needToUpdate = true;
 	}
+
 	public void setToScaleY(Number toScaleY)
 	{
 		this.toScaleY = toScaleY.floatValue();
 		needToUpdate = true;
 	}
+
 	public void setToScaleXY(Number toScaleX, Number toScaleY)
 	{
 		setToScaleX(toScaleX);
@@ -299,20 +317,24 @@ public class Block extends View
 	{
 		return ((Math.abs(block1.i - block2.i) == 1 && block1.j == block2.j) || (Math.abs(block1.j - block2.j) == 1 && block1.i == block2.i));
 	}
+
 	static public int getXPosition(float i, int blockNum)
 	{
-		return (int) (i * (AppActivity.blockSize + blockGap) + (AppActivity.WIDTH  - (AppActivity.blockSize + blockGap) * blockNum) * 0.5f + blockGap / 2f);
+		return (int) (i * (Application.getBLOCK_SIZE() + Application.getBLOCK_GAP()) + (Application.getWIDTH() - (Application.getBLOCK_SIZE() + Application.getBLOCK_GAP()) * blockNum) * 0.5f + Application.getBLOCK_GAP() / 2f);
 	}
+
 	static public int getYPosition(float i, int blockNum)
 	{
-		return (int) (i * (AppActivity.blockSize + blockGap) + (AppActivity.HEIGHT - (AppActivity.blockSize + blockGap) * blockNum) * 0.5f + blockGap / 2f);
+		return (int) (i * (Application.getBLOCK_SIZE() + Application.getBLOCK_GAP()) + (Application.getHEIGHT() - (Application.getBLOCK_SIZE() + Application.getBLOCK_GAP()) * blockNum) * 0.5f + Application.getBLOCK_GAP() / 2f);
 	}
+
 	static public int getXPosition(float i)
 	{
-		return getXPosition(i, blockNum);
+		return getXPosition(i, Application.BLOCK_NUM);
 	}
+
 	static public int getYPosition(float i)
 	{
-		return getYPosition(i, blockNum);
+		return getYPosition(i, Application.BLOCK_NUM);
 	}
 }
