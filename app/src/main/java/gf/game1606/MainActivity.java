@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		GFtext = new TextView(this);
 		GFtext.setText("GF");
 		GFtext.setTextColor(Color.parseColor("#CFCFCF"));
-		GFtext.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansMono.ttf"));
+		GFtext.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
 		GFtext.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
 		GFtext.setSingleLine();
 		GFtext.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);

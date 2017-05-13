@@ -52,7 +52,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 		GFtext = new TextView(this);
 		GFtext.setText("GF");
 		GFtext.setTextColor(Color.parseColor("#CDCDCD"));
-		GFtext.setTypeface(Typeface.createFromAsset(getAssets(), "DroidSansMono.ttf"));
+		GFtext.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
 		GFtext.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
 		GFtext.setSingleLine();
 		GFtext.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
