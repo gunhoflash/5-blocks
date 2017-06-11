@@ -1,4 +1,4 @@
-package gf.game1606;
+package gf.game1606.activity;
 
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -14,6 +14,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import gf.game1606.Application;
+import gf.game1606.R;
 import gf.game1606.block.Block;
 import gf.game1606.block.BlockManager;
 

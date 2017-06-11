@@ -1,4 +1,4 @@
-package gf.game1606;
+package gf.game1606.activity;
 
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 
+import gf.game1606.Application;
 import gf.game1606.block.Block;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener
@@ -34,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 	private TextView startBtnText;
 	private Block tutorialBtn;
 	private TextView tutorialBtnText;
+	private Block recordBtn;
+	private TextView recordBtnText;
 	// layout
 
 	private Boolean realTimeThreadIsRunning = true;
@@ -93,6 +96,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 	private void initializeLayout()
 	{
 		float rotation = -26f;
+		double toX, toY;
 
 		titleText = new TextView(this);
 		titleText.setText("5 Blocks");
@@ -120,8 +124,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		//relativeLayout.addView(GFtext, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 		*/
 
+		toX = Application.getWIDTH() * 0.35;
+		toY = Application.getHEIGHT() * 0.4;
 		// startBtn
-		startBtn = new Block(this, Application.getBLOCK_SIZE() * 9, Application.getWIDTH() * 0.35, Application.getHEIGHT() * 0.4, 1);
+		startBtn = new Block(this, Application.getBLOCK_SIZE() * 9, toX, toY, 3);
 		startBtn.setPivotX(0);
 		startBtn.setPivotY(0);
 		startBtn.setRotation(rotation);
@@ -146,9 +152,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		startBtnText.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 		relativeLayout.addView(startBtnText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+		toX = toX - Application.getBLOCK_SIZE() * 7 * Math.cos(Math.toRadians(rotation));
+		toY = toY - Application.getBLOCK_SIZE() * 7 * Math.sin(Math.toRadians(rotation));
 		// tutorialBtn
-		tutorialBtn = new Block(this, Application.getBLOCK_SIZE() * 6, Application.getWIDTH() * 0.25 -  Application.getBLOCK_SIZE() * 6, Application.getHEIGHT() * 0.429, 2);
-		tutorialBtn.setPivotX(Application.getBLOCK_SIZE() * 6);
+		tutorialBtn = new Block(this, Application.getBLOCK_SIZE() * 6, toX, toY, 0);
+		tutorialBtn.setPivotX(0);
 		tutorialBtn.setPivotY(0);
 		tutorialBtn.setRotation(rotation);
 		tutorialBtn.setEnabled(true);
@@ -162,25 +170,48 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		tutorialBtnText.setText("HOW\nTO\nPLAY");
 		tutorialBtnText.setPivotX(0);
 		tutorialBtnText.setPivotY(0);
-		tutorialBtnText.setX(tutorialBtn.getToX() + Application.getBLOCK_SIZE() * 4);
-		tutorialBtnText.setY(tutorialBtn.getToY() + Application.getBLOCK_SIZE() * 3);
+		tutorialBtnText.setWidth((int) (Application.getBLOCK_SIZE() * 5.5));
+		tutorialBtnText.setX((float) (tutorialBtn.getToX() - Application.getBLOCK_SIZE() * Math.sin(Math.toRadians(rotation))));
+		tutorialBtnText.setY((float) (tutorialBtn.getToY() + Application.getBLOCK_SIZE() * Math.cos(Math.toRadians(rotation))));
 		tutorialBtnText.setRotation(rotation);
 		tutorialBtnText.setTextColor(Color.WHITE);
 		tutorialBtnText.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
 		tutorialBtnText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 40);
 		tutorialBtnText.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
 		relativeLayout.addView(tutorialBtnText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		System.out.println("tutorialBtnText.getWidth(), tutorialBtnText.getHeight():" + tutorialBtnText.getWidth() + ", " + tutorialBtnText.getHeight());
+
+		toX = toX + Application.getBLOCK_SIZE() * Math.cos(Math.toRadians(rotation)) - Application.getBLOCK_SIZE() * 7 * Math.sin(Math.toRadians(rotation));
+		toY = toY + Application.getBLOCK_SIZE() * Math.sin(Math.toRadians(rotation)) + Application.getBLOCK_SIZE() * 7 * Math.cos(Math.toRadians(rotation));
+		// recordBtn
+		recordBtn = new Block(this, Application.getBLOCK_SIZE() * 5, toX, toY, 1);
+		recordBtn.setPivotX(0);
+		recordBtn.setPivotY(0);
+		recordBtn.setRotation(rotation);
+		recordBtn.setEnabled(true);
+		recordBtn.setOnClickListener(this);
+		relativeLayout.addView(recordBtn, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+		blocks.add(recordBtn);
+		recordBtn.setWidthHeight();
+
+		// tutorialBtnText
+		recordBtnText = new TextView(this);
+		recordBtnText.setText("RECORD");
+		recordBtnText.setPivotX(0);
+		recordBtnText.setPivotY(0);
+		recordBtnText.setWidth((int) (Application.getBLOCK_SIZE() * 5));
+		recordBtnText.setX((float) (recordBtn.getToX() - Application.getBLOCK_SIZE() / 2 * Math.cos(Math.toRadians(rotation))));
+		recordBtnText.setY((float) (recordBtn.getToY() - Application.getBLOCK_SIZE() / 2 * Math.sin(Math.toRadians(rotation))));
+		recordBtnText.setRotation(rotation);
+		recordBtnText.setTextColor(Color.WHITE);
+		recordBtnText.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
+		recordBtnText.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 32);
+		recordBtnText.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_END);
+		relativeLayout.addView(recordBtnText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 	}
 
 	@Override
 	public void onClick(View v)
 	{
-		System.out.println(startBtn.getClipBounds().toString());
-		System.out.println(tutorialBtn.getClipBounds().toString());
-		System.out.println(startBtn.getX() + ", " + startBtn.getY() + ", " + startBtn.getWidth() + ", " + startBtn.getHeight());
-		System.out.println(tutorialBtn.getX() + ", " + tutorialBtn.getY() + ", " + tutorialBtn.getWidth() + ", " + tutorialBtn.getHeight());
-		System.out.println(tutorialBtnText.getX() + ", " + tutorialBtnText.getY() + ", " + tutorialBtnText.getWidth() + ", " + tutorialBtnText.getHeight());
 		System.out.println("MainActivity onClick");
 
 		Intent intent;
@@ -188,6 +219,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 			intent = new Intent(getApplicationContext(), GameActivity.class);
 		else if (v.equals(tutorialBtn))
 			intent = new Intent(getApplicationContext(), HowToPlayActivity.class);
+		else if (v.equals(recordBtn))
+			intent = new Intent(getApplicationContext(), RecordActivity.class);
 		else
 			return;
 		intent.putExtra("select", "start");

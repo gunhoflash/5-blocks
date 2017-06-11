@@ -8,5 +8,5 @@
 	android:paddingLeft = "0dp"
 	android:paddingRight = "0dp"
 	android:paddingTop = "0dp"
-	tools:context = ".MainActivity">
+	tools:context = ".activity.MainActivity">
 </RelativeLayout>

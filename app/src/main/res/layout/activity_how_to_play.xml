@@ -9,5 +9,5 @@
 	android:paddingRight = "@dimen/activity_horizontal_margin"
 	android:paddingTop = "@dimen/activity_vertical_margin"
 	android:id = "@+id/activity_how_to_play"
-	tools:context = "gf.game1606.HowToPlayActivity">
+	tools:context = "gf.game1606.activity.HowToPlayActivity">
 </RelativeLayout>

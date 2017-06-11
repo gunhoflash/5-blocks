@@ -13,9 +13,10 @@ import gf.game1606.Application;
 
 public class Block extends View
 {
-	private static final int UN_SELECTED_INDEX = -1;
+	private static final int UNSELECTED_INDEX = -1;
 	private Context context;
 	private boolean needToUpdate;
+	private String removingState = ""; // 0: not removing, 1: start removing, 2: now removing
 
 	private int blockSize;
 	private int color = Color.WHITE;
@@ -29,7 +30,7 @@ public class Block extends View
 	private float toScaleY = 1;
 
 	private Rect hitBox;
-	private int selectedIndex = UN_SELECTED_INDEX;
+	private int selectedIndex = UNSELECTED_INDEX;
 
 	public Block(Context context, Number blockSize, Number toX, Number toY, int level)
 	{
@@ -75,7 +76,7 @@ public class Block extends View
 			if (i != -1)
 			{
 				this.toColor = ContextCompat.getColor(context, BlockManager.color[level]);
-				if (selectedIndex != UN_SELECTED_INDEX)
+				if (selectedIndex != UNSELECTED_INDEX)
 					setToScaleXY(1.2, 1.2);
 				else
 					setToScaleXY(1, 1);
@@ -194,12 +195,12 @@ public class Block extends View
 
 	public void unSelect()
 	{
-		this.select(UN_SELECTED_INDEX);
+		this.select(UNSELECTED_INDEX);
 	}
 
 	public boolean isSelected()
 	{
-		return (this.selectedIndex != UN_SELECTED_INDEX);
+		return (this.selectedIndex != UNSELECTED_INDEX);
 	}
 
 	// getter
@@ -308,6 +309,11 @@ public class Block extends View
 		setToScaleY(toScaleY);
 	}
 
+	public void setRemovingState(String removingState)
+	{
+		this.removingState = removingState;
+	}
+
 	public boolean isHit(Number x, Number y)
 	{
 		return this.hitBox.contains(x.intValue(), y.intValue());
@@ -336,5 +342,10 @@ public class Block extends View
 	static public int getYPosition(float i)
 	{
 		return getYPosition(i, Application.BLOCK_NUM);
+	}
+
+	public String getRemovingState()
+	{
+		return removingState;
 	}
 }
