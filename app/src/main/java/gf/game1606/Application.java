@@ -7,12 +7,18 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.WindowManager;
+import android.widget.Toast;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.StringTokenizer;
 
+import gf.game1606.block.Block;
 import gf.game1606.block.BlockManager;
 
 public abstract class Application
@@ -36,8 +42,8 @@ public abstract class Application
 	private static int soundID;
 
 	// data
-	private static String loadedData;
-	private static ArrayList<Integer> integerDataList;
+	private static String loadedData_string;
+	private static ArrayList<Integer> loadedData_integer;
 	private static int toScore = 0;
 	private static int score = 0;
 	private static int totalScore = 0;
@@ -69,24 +75,128 @@ public abstract class Application
 		setSoundID(getSoundPool().load(context, R.raw.tick, 1));
 	}
 
-	public static void loadScoresWithData()
-	{
-		toScore = integerDataList.get(30);
-		totalScore = integerDataList.get(31);
-		highScore = integerDataList.get(32);
-	}
-
 	public static void setIntegerDataList()
 	{
-		StringTokenizer stringTokenizer = new StringTokenizer(loadedData, "_");
+		StringTokenizer stringTokenizer = new StringTokenizer(loadedData_string, "_");
 		// get data as String
 
-		integerDataList = new ArrayList<>();
+		loadedData_integer = new ArrayList<>();
 		for (int i = 0; i < 33; i++)
 		{
-			integerDataList.add(Integer.parseInt(stringTokenizer.nextToken()));
+			loadedData_integer.add(Integer.parseInt(stringTokenizer.nextToken()));
 		}
 		// get data as Integer
+	}
+
+	public static void saveData(Context context, Block[] nextBlocks, Block[][] blocks, ArrayList<Block> removeBlocks)
+	{
+		int i, j;
+		StringBuilder stringBuilder = new StringBuilder();
+
+		for (j = 0; j < Application.BLOCK_NUM; j++)
+		{
+			if (nextBlocks[j] == null)
+				stringBuilder.append("0_");
+			else
+			{
+				stringBuilder.append(String.valueOf(nextBlocks[j].getLevel() + 1));
+				stringBuilder.append("_");
+			}
+		}
+		for (i = 0; i < Application.BLOCK_NUM; i++)
+		{
+			for (j = 0; j < Application.BLOCK_NUM; j++)
+			{
+				if (blocks[i][j] == null)
+					stringBuilder.append("0_");
+				else if (removeBlocks.contains(blocks[i][j]))
+					stringBuilder.append("0_");
+				else
+				{
+					stringBuilder.append(String.valueOf(blocks[i][j].getLevel() + 1));
+					stringBuilder.append("_");
+				}
+			}
+		}
+		stringBuilder.append(String.valueOf(Application.getToScore()));
+		stringBuilder.append("_");
+		stringBuilder.append(String.valueOf(Application.getTotalScore()));
+		stringBuilder.append("_");
+		stringBuilder.append(String.valueOf(Application.getHighScore()));
+		stringBuilder.append("_null");
+
+		Application.setLoadedData_String(stringBuilder.substring(0));
+
+		FileOutputStream outputStream;
+		try
+		{
+			outputStream = context.openFileOutput(Application.FILENAME, Context.MODE_PRIVATE);
+			outputStream.write(Application.getLoadedData_String().getBytes());
+			outputStream.close();
+		}
+		catch (Exception er)
+		{
+			er.printStackTrace();
+			Toast.makeText(context, "Error code: DE2\nCannot use userData", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	public static void loadData(Context context)
+	{
+		String defaultString = "0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_null";
+		/*
+
+		0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_1234567890_1234567890_1234567890_null
+		5 nextBlocks level, 25 blocks level, now score, total score, high score, not use yet
+
+		block.level = saveFile.level - 1;
+		if 'level' == 0, then it means 'null'
+
+		*/
+		FileOutputStream outputStream;
+		FileInputStream inputStream;
+		StringBuilder stringBuilder = new StringBuilder("");
+		try
+		{
+			inputStream = context.openFileInput(Application.FILENAME);
+			int i = inputStream.read();
+			while (i != -1)
+			{
+				stringBuilder.append(Character.toString((char) i));
+				i = inputStream.read();
+			}
+			inputStream.close();
+		}
+		catch (FileNotFoundException e)
+		{
+			stringBuilder = new StringBuilder(defaultString);
+			try
+			{
+				outputStream = context.openFileOutput(Application.FILENAME, Context.MODE_PRIVATE);
+				outputStream.write(defaultString.getBytes());
+				outputStream.close();
+			}
+			catch (Exception er)
+			{
+				er.printStackTrace();
+				Toast.makeText(context, "Error code: DE1\nCannot use userData", Toast.LENGTH_SHORT).show();
+				return;
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			Toast.makeText(context, "Error code: DE0\nCannot use userData", Toast.LENGTH_SHORT).show();
+			return;
+		}
+
+		Application.setLoadedData_String(stringBuilder.substring(0));
+		Application.setIntegerDataList();
+		toScore = loadedData_integer.get(30);
+		totalScore = loadedData_integer.get(31);
+		highScore = loadedData_integer.get(32);
+
+		System.out.println("getLoadedData_String(): " + Application.getLoadedData_String());
 	}
 
 
@@ -176,24 +286,24 @@ public abstract class Application
 
 	// get/set data
 
-	public static String getLoadedData()
+	public static String getLoadedData_String()
 	{
-		return loadedData;
+		return loadedData_string;
 	}
 
-	public static void setLoadedData(String loadedData)
+	public static void setLoadedData_String(String loadedData_string)
 	{
-		Application.loadedData = loadedData;
+		Application.loadedData_string = loadedData_string;
 	}
 
-	public static ArrayList<Integer> getIntegerDataList()
+	public static ArrayList<Integer> getLoadedData_Integer()
 	{
-		return integerDataList;
+		return loadedData_integer;
 	}
 
-	public static void setIntegerDataList(ArrayList<Integer> integerDataList)
+	public static void setLoadedData_Integer(ArrayList<Integer> loadedData_integer)
 	{
-		Application.integerDataList = integerDataList;
+		Application.loadedData_integer = loadedData_integer;
 	}
 
 	public static int getToScore()
@@ -234,5 +344,10 @@ public abstract class Application
 	public static void setHighScore(int highScore)
 	{
 		Application.highScore = highScore;
+	}
+
+	public static float dpFromPx(Context context, float dp)
+	{
+		return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, context.getResources().getDisplayMetrics());
 	}
 }

@@ -1,7 +1,6 @@
 package gf.game1606.activity;
 
 import android.content.pm.ActivityInfo;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
@@ -43,11 +42,9 @@ public class HowToPlayActivity extends AppCompatActivity implements View.OnTouch
 		setContentView(R.layout.activity_how_to_play);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-		relativeLayout = (RelativeLayout) findViewById(R.id.activity_how_to_play);
+		relativeLayout = findViewById(R.id.activity_how_to_play);
 		if (relativeLayout != null)
 			relativeLayout.setOnTouchListener(this);
-
-		blockManager = new BlockManager(this, relativeLayout, "tutorial", null);
 
 		System.out.println("language: " + Application.LANGUAGE);
 		if (Application.LANGUAGE == null)
@@ -63,9 +60,8 @@ public class HowToPlayActivity extends AppCompatActivity implements View.OnTouch
 		textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
 		textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
 		relativeLayout.addView(textView, new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT));
-		textView.setBackgroundColor(Color.parseColor("#EAEAEA"));
 
-		blockManager.playing = true;
+		blockManager = new BlockManager(this, relativeLayout, "tutorial", null);
 		blockManager.start();
 	}
 
@@ -86,5 +82,14 @@ public class HowToPlayActivity extends AppCompatActivity implements View.OnTouch
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void onStop()
+	{
+		System.out.println("onStop");
+		blockManager.destroy();
+		finish();
+		super.onStop();
 	}
 }

@@ -12,7 +12,8 @@
 		android:label="@string/app_name"
 		android:screenOrientation="portrait"
 		android:supportsRtl="true"
-		android:theme="@style/AppTheme_NoActionBar">
+		android:theme="@style/AppTheme_NoActionBar"
+		android:fullBackupContent="false">
 		<activity android:name=".activity.MainActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN"/>

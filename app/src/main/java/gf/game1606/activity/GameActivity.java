@@ -76,8 +76,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 		});
 		relativeLayout.addView(replay, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+		//TODO: Add timeMachine that undo last action.
+
 		blockManager = new BlockManager(this, relativeLayout, "game", scoreTextView);
-		blockManager.playing = true;
 		blockManager.start();
 	}
 
@@ -85,8 +86,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 	public void onStop()
 	{
 		System.out.println("onStop");
-		blockManager.playing = false;
-		blockManager.realTimeThreadIsRunning = false;
+		blockManager.destroy();
 		finish();
 		super.onStop();
 	}

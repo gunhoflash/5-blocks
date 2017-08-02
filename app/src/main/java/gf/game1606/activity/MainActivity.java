@@ -1,6 +1,5 @@
 package gf.game1606.activity;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -13,11 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 import gf.game1606.Application;
@@ -30,7 +25,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 	private RelativeLayout relativeLayout;
 
 	private TextView titleText;
-	private TextView GFtext;
 	private Block startBtn;
 	private TextView startBtnText;
 	private Block tutorialBtn;
@@ -61,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		Application.initializeVariables(this);
 		initializeVariable();
 		initializeLayout();
-		loadData();
+		Application.loadData(this);
 		realTimeThread.start();
 	}
 
@@ -111,18 +105,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 		titleText.setScaleY(2f);
 		titleText.setRotation(rotation);
 		relativeLayout.addView(titleText, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-		/*
-		GFtext = new TextView(this);
-		GFtext.setText("GF");
-		GFtext.setTextColor(Color.parseColor("#CFCFCF"));
-		GFtext.setTypeface(Typeface.createFromAsset(getAssets(), "Roboto-Thin.ttf"));
-		GFtext.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 22);
-		GFtext.setSingleLine();
-		GFtext.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-		GFtext.setY((float) (Application.getHEIGHT() - 48 * Application.getRATIO()));
-		//relativeLayout.addView(GFtext, new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-		*/
 
 		toX = Application.getWIDTH() * 0.35;
 		toY = Application.getHEIGHT() * 0.4;
@@ -250,61 +232,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 			realTimeThreadSleepTime = 1000;
 		else if (realTimeThreadSleepTime == 1000)
 			realTimeThreadSleepTime = 36;
-	}
-
-	private void loadData()
-	{
-		String defaultString = "0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_null";
-		/*
-
-		0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_0_1234567890_1234567890_1234567890_null
-		5 nextBlocks level, 25 blocks level, now score, total score, high score, not use yet
-
-		block.level = saveFile.level - 1;
-		if 'level' == 0, then it means 'null'
-
-		*/
-		FileOutputStream outputStream;
-		FileInputStream inputStream;
-		StringBuilder stringBuilder = new StringBuilder("");
-		try
-		{
-			inputStream = openFileInput(Application.FILENAME);
-			int i = inputStream.read();
-			while (i != -1)
-			{
-				stringBuilder.append(Character.toString((char) i));
-				i = inputStream.read();
-			}
-			inputStream.close();
-		}
-		catch (FileNotFoundException e)
-		{
-			stringBuilder = new StringBuilder(defaultString);
-			try
-			{
-				outputStream = openFileOutput(Application.FILENAME, Context.MODE_PRIVATE);
-				outputStream.write(defaultString.getBytes());
-				outputStream.close();
-			}
-			catch (Exception er)
-			{
-				er.printStackTrace();
-				Toast.makeText(this, "Error code: DE1\nCannot use userData", Toast.LENGTH_SHORT).show();
-				return;
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			Toast.makeText(this, "Error code: DE0\nCannot use userData", Toast.LENGTH_SHORT).show();
-			return;
-		}
-
-		Application.setLoadedData(stringBuilder.substring(0));
-		Application.setIntegerDataList();
-		Application.loadScoresWithData();
-
-		System.out.println("loadedData: " + Application.getLoadedData());
 	}
 }

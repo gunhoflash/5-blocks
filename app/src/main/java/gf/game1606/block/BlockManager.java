@@ -2,7 +2,6 @@ package gf.game1606.block;
 
 import android.content.Context;
 import android.os.Handler;
-import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,9 +43,8 @@ public class BlockManager
 	private TextView scoreTextView;
 	// game
 
-	public Boolean playing = false;
 	private String playingMode;
-	public Boolean realTimeThreadIsRunning = true;
+	private Boolean realTimeThreadIsRunning;
 	private Handler realTimeThreadHandler;
 	private ThreadRunnable realTimeThreadRunnable;
 	private Thread realTimeThread;
@@ -72,10 +69,12 @@ public class BlockManager
 		this.relativeLayout = relativeLayout;
 		this.scoreTextView = scoreTextView;
 
+		realTimeThreadIsRunning = true;
 		realTimeThreadHandler = new Handler();
 		realTimeThreadRunnable = new ThreadRunnable();
 		realTimeThread = new Thread(new Runnable()
 		{
+			// TODO: maybe this run method burn my CPU!!
 			@Override
 			public void run()
 			{
@@ -85,8 +84,8 @@ public class BlockManager
 					{
 						if (realTimeThreadIsRunning)
 						{
-							Thread.sleep(realTimeThreadSleepTime);
 							realTimeThreadHandler.post(realTimeThreadRunnable);
+							Thread.sleep(realTimeThreadSleepTime);
 						}
 					}
 				}
@@ -102,7 +101,6 @@ public class BlockManager
 		else if (playingMode.equals("tutorial"))
 			setTutorialBlocks();
 
-		playing = true;
 	}
 
 	public void initialize()
@@ -140,8 +138,18 @@ public class BlockManager
 		removeBlocks = new ArrayList<>();
 	}
 
+	public void destroy()
+	{
+		realTimeThreadIsRunning = false;
+		realTimeThread.interrupt();
+		if (!realTimeThread.isInterrupted())
+			realTimeThread.interrupt();
+		realTimeThread = null;
+	}
+
 	public void start()
 	{
+		realTimeThreadIsRunning = true;
 		realTimeThread.start();
 	}
 
@@ -289,12 +297,12 @@ public class BlockManager
 		}
 	}
 
-	public Block newRandomBlock(int j)
+	private Block newRandomBlock(int j)
 	{
 		return newBlock(j, (Math.random() > 0.025) ? (Application.COLOR_NUM - 2) - (int) (Math.random() * (Application.COLOR_NUM - 1)) : Application.COLOR_NUM - 1);
 	}
 
-	public Block newBlock(int j, int level)
+	private Block newBlock(int j, int level)
 	{
 		Block block = new Block(context, (int) Application.getBLOCK_SIZE(), Block.getXPosition(j), Block.getYPosition(-1), level);
 		block.setX(block.getToX());
@@ -307,21 +315,21 @@ public class BlockManager
 		return block;
 	}
 
-	public void removeBlock(int i, int j)
+	private void removeBlock(int i, int j)
 	{
 		if (blocks[i][j] == null) return;
 		relativeLayout.removeView(blocks[i][j]);
 		blocks[i][j] = null;
 	}
 
-	public void loadData()
+	private void loadData()
 	{
 		Application.setIntegerDataList();
 
 		int tempInt, i, j;
 		for (j = 0; j < Application.BLOCK_NUM; j++)
 		{
-			tempInt = Application.getIntegerDataList().get(j);
+			tempInt = Application.getLoadedData_Integer().get(j);
 			if (tempInt == 0)
 				nextBlocks[j] = newRandomBlock(j);
 			else
@@ -331,7 +339,7 @@ public class BlockManager
 		{
 			for (j = 0; j < Application.BLOCK_NUM; j++)
 			{
-				tempInt = Application.getIntegerDataList().get(Application.BLOCK_NUM * (i + 1) + j);
+				tempInt = Application.getLoadedData_Integer().get(Application.BLOCK_NUM * (i + 1) + j);
 				if (tempInt == 0)
 				{
 					blocks[i][j] = null;
@@ -351,57 +359,9 @@ public class BlockManager
 		}
 	}
 
-	public void saveData()
+	private void saveData()
 	{
-		int i, j;
-		StringBuilder stringBuilder = new StringBuilder();
-
-		for (j = 0; j < Application.BLOCK_NUM; j++)
-		{
-			if (nextBlocks[j] == null)
-				stringBuilder.append("0_");
-			else
-			{
-				stringBuilder.append(String.valueOf(nextBlocks[j].getLevel() + 1));
-				stringBuilder.append("_");
-			}
-		}
-		for (i = 0; i < Application.BLOCK_NUM; i++)
-		{
-			for (j = 0; j < Application.BLOCK_NUM; j++)
-			{
-				if (blocks[i][j] == null)
-					stringBuilder.append("0_");
-				else if (removeBlocks.contains(blocks[i][j]))
-					stringBuilder.append("0_");
-				else
-				{
-					stringBuilder.append(String.valueOf(blocks[i][j].getLevel() + 1));
-					stringBuilder.append("_");
-				}
-			}
-		}
-		stringBuilder.append(String.valueOf(Application.getToScore()));
-		stringBuilder.append("_");
-		stringBuilder.append(String.valueOf(Application.getTotalScore()));
-		stringBuilder.append("_");
-		stringBuilder.append(String.valueOf(Application.getHighScore()));
-		stringBuilder.append("_null");
-
-		Application.setLoadedData(stringBuilder.substring(0));
-
-		FileOutputStream outputStream;
-		try
-		{
-			outputStream = context.openFileOutput(Application.FILENAME, Context.MODE_PRIVATE);
-			outputStream.write(Application.getLoadedData().getBytes());
-			outputStream.close();
-		}
-		catch (Exception er)
-		{
-			er.printStackTrace();
-			Toast.makeText(context, "Error code: DE2\nCannot use userData", Toast.LENGTH_SHORT).show();
-		}
+		Application.saveData(context, nextBlocks, blocks, removeBlocks);
 	}
 
 	public boolean onTouch(View v, MotionEvent event)
@@ -490,44 +450,42 @@ public class BlockManager
 				return true;
 
 			case MotionEvent.ACTION_UP:
-				if (playing)
+				if (selectedBlocks.size() > 1)
 				{
-					if (selectedBlocks.size() > 1)
+					k = selectedBlocks.get(0).getLevel();
+					if (k != Application.COLOR_NUM)
 					{
-						k = selectedBlocks.get(0).getLevel();
-						if (k != Application.COLOR_NUM)
-						{
-							int plusScore = (int) (Math.pow(selectedBlocks.size(), 1.9 + 2.0 / (k + 4)) * 100 / (k + 4));
-							Application.setToScore(Application.getToScore() + plusScore);
-							Application.setTotalScore(Application.getTotalScore() + plusScore);
-							if (Application.getToScore() > Application.getHighScore())
-								Application.setHighScore(Application.getToScore());
+						int plusScore = (int) (Math.pow(selectedBlocks.size(), 1.9 + 2.0 / (k + 4)) * 100 / (k + 4));
+						Application.setToScore(Application.getToScore() + plusScore);
+						Application.setTotalScore(Application.getTotalScore() + plusScore);
+						if (Application.getToScore() > Application.getHighScore())
+							Application.setHighScore(Application.getToScore());
 
-							for (i = 0; i < Application.BLOCK_NUM; i++)
+						for (i = 0; i < Application.BLOCK_NUM; i++)
+						{
+							for (j = 0; j < Application.BLOCK_NUM; j++)
 							{
-								for (j = 0; j < Application.BLOCK_NUM; j++)
+								if (blocks[i][j].getLevel() == k && !blocks[i][j].isSelected())
 								{
-									if (blocks[i][j].getLevel() == k && !blocks[i][j].isSelected())
-									{
-										if (blocks[i][j].getLevel() == Application.COLOR_NUM - 1)
-											OOPS = true;
-										blocks[i][j].setLevel(blocks[i][j].getLevel() + 1);
-										blockLevels[i][j] = blocks[i][j].getLevel();
-									}
+									if (blocks[i][j].getLevel() == Application.COLOR_NUM - 1)
+										OOPS = true;
+									blocks[i][j].setLevel(blocks[i][j].getLevel() + 1);
+									blockLevels[i][j] = blocks[i][j].getLevel();
 								}
 							}
-
-							while (selectedBlocks.size() > 0)
-							{
-								selectedBlocks.get(0).setRemovingState(REMOVING_STATE_START_REMOVING);
-								removeBlocks.add(selectedBlocks.remove(0));
-							}
-
-							if (removeBlocks.size() > 0)
-								saveData();
 						}
+
+						while (selectedBlocks.size() > 0)
+						{
+							selectedBlocks.get(0).setRemovingState(REMOVING_STATE_START_REMOVING);
+							removeBlocks.add(selectedBlocks.remove(0));
+						}
+
+						if (removeBlocks.size() > 0)
+							saveData();
 					}
 				}
+
 				selectedBlocks = new ArrayList<>();
 				for (i = 0; i < Application.BLOCK_NUM; i++)
 				{
@@ -550,44 +508,5 @@ public class BlockManager
 				System.out.println("MotionEvent.default");
 				return false;
 		}
-	}
-
-	// A star?
-
-	/*private ArrayList<int[]> getPath(int[] startBlock, int[] endBlock, int level)
-	{
-		if (getBlockDistance(startBlock, endBlock) == 1)
-		{
-			return new ArrayList<>(Arrays.asList(startBlock, endBlock));
-		}
-
-		int[] searchingQueue = {0, 0, 0, 0};
-		double[] blockDistances = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
-		if (isConnectableBlock(startBlock[0] - 1, startBlock[1], level))
-			blockDistances[0] = getBlockDistance(startBlock[0] - 1, startBlock[1], endBlock[0], endBlock[1]);
-		if (isConnectableBlock(startBlock[0] + 1, startBlock[1], level))
-			blockDistances[1] = getBlockDistance(startBlock[0] + 1, startBlock[1], endBlock[0], endBlock[1]);
-		if (isConnectableBlock(startBlock[0], startBlock[1] - 1, level))
-			blockDistances[2] = getBlockDistance(startBlock[0], startBlock[1] - 1, endBlock[0], endBlock[1]);
-		if (isConnectableBlock(startBlock[0], startBlock[1] + 1, level))
-			blockDistances[3] = getBlockDistance(startBlock[0], startBlock[1] + 1, endBlock[0], endBlock[1]);
-		return;
-	}*/
-
-	private boolean isConnectableBlock(int i, int j, int level)
-	{
-		if ((i < 0 || i >= Application.BLOCK_NUM) || (j < 0 || j >= Application.BLOCK_NUM))
-			return false;
-		else
-			return blockLevels[i][j] == level;
-	}
-
-	private double getBlockDistance(int[] block1, int[] block2)
-	{
-		return Math.pow(block1[0] - block2[0], 2) + Math.pow(block1[1] - block2[1], 2);
-	}
-	private double getBlockDistance(int i1, int j1, int i2, int j2)
-	{
-		return Math.pow(i1 - i2, 2) + Math.pow(j1 - j2, 2);
 	}
 }
